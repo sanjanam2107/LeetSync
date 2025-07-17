@@ -1,0 +1,218 @@
+1) “Why are you using flags like --fetch instead of just fetch = true or fetch true?”
+In CLI tools, using --fetch is standard practice because it clearly marks it as a named flag or option.
+
+Python’s argparse module is designed to work with these -- flags. When I use --fetch, it automatically sets args.fetch = True, which makes the code clean and predictable.
+
+If I used something like fetch true, I’d have to manually parse the arguments using sys.argv, which is error-prone, harder to maintain, and doesn't support flexible options like --export=result.csv.
+
+Using -- also aligns with how real-world CLI tools like git, pip, or docker work — so it follows industry convention and improves usability.
+ALSO:
+“It’s easier to support combined flags like --fetch --export=data.csv.”
+
+“Helps generate automatic help menus with --help.”
+| Term       | What it really means                                             |
+| ---------- | ---------------------------------------------------------------- |
+| **Flag**   | An option that doesn’t take a value. It’s just `True`/`False`.   |
+| **Option** | A named argument that expects a value (`--output filename.csv`). |
+
+2) What are CLI flags or options?
+
+Flags and options are named arguments passed to CLI tools to control behavior.
+Flags are usually boolean switches like --fetch, and options accept values like --output=result.csv.
+Python's argparse handles these cleanly and also auto-generates help documentation.
+
+
+LEETCODE_SESSION = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfYXV0aF91c2VyX2lkIjoiOTA0ODQ0MCIsIl9hdXRoX3VzZXJfYmFja2VuZCI6ImFsbGF1dGguYWNjb3VudC5hdXRoX2JhY2tlbmRzLkF1dGhlbnRpY2F0aW9uQmFja2VuZCIsIl9hdXRoX3VzZXJfaGFzaCI6IjNiNjgxM2RmMjE0YjViMGMxYzliYjYzMDFkZTQzNWYyZDdkMzczNjZhNjI5N2U3ZDkwZDBhMzk0NzI2YmEyZjgiLCJzZXNzaW9uX3V1aWQiOiI4ZGUyYjE2MSIsImlkIjo5MDQ4NDQwLCJlbWFpbCI6InNhbmphbmFtYW5qdW5hdGg2MzYzQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoibGVpbGVpMjEiLCJ1c2VyX3NsdWciOiJsZWlsZWkyMSIsImF2YXRhciI6Imh0dHBzOi8vYXNzZXRzLmxlZXRjb2RlLmNvbS91c2Vycy9kZWZhdWx0X2F2YXRhci5qcGciLCJyZWZyZXNoZWRfYXQiOjE3NTI0MjEwMjAsImlwIjoiMTA2LjUxLjE5NS4yMzUiLCJpZGVudGl0eSI6ImQyYWQ2Nzg1ZDI1Njg1MWRkMzY2NzAzYmRjNjFhYTYxIiwiZGV2aWNlX3dpdGhfaXAiOlsiOWVmOTJlMjRhYmY2MWE5NDcxNTM5MjBjMjE3NjAyZDgiLCIxMDYuNTEuMTk1LjIzNSJdLCJfc2Vzc2lvbl9leHBpcnkiOjEyMDk2MDB9.j0rJC8AOWoJ3v6IzFB9puKyD6xiHKh_zozLtKJlqtT0 
+Leetcode doesn't offer a public API,
+but their frontend uses a GraphQL API that we can access.
+To call it, we must pretend to be logged in by sending our LEETCODE_SESSION cookie.
+Without it, the server won’t know who we are.
+
+3) “Why did you use a session cookie instead of automating login with username/password?”
+
+Leetcode doesn’t expose a public login API.
+Logging in via code would require scraping their login form, handling CSRF tokens, and redirects — which is brittle and unreliable.
+So I use the session cookie from a logged-in browser, which is stable and secure for personal use.
+or in other words:
+Leetcode’s login process involves CSRF protection, cookie-based session handling, and redirects — which makes it complex to automate securely.
+Instead, I use the LEETCODE_SESSION cookie from a logged-in browser session. It’s simpler, secure, and works reliably for personal tools.
+
+Leetcode doesn’t expose a login API:
+
+There’s no POST /login for us to call
+Login happens in the browser via a form
+And it uses CSRF tokens, redirects, cookies, etc.
+
+If you try to POST username/password, you'll need to:
+
+Extract CSRF token
+Maintain session with cookies
+Handle redirects manually
+
+4)What is GraphQL? (Explain like you're in an interview)
+GraphQL is a query language for APIs and a runtime for executing those queries.
+Instead of multiple REST endpoints, GraphQL gives you:
+One single endpoint (/graphql)
+Where you can ask exactly what data you need, and get exactly that back.
+It was developed by Facebook in 2012 and open-sourced in 2015.
+
+5) why graphql over rest?
+
+GraphQL allows the client to specify exactly what data it needs, avoiding over-fetching or under-fetching.
+It reduces the number of network requests and provides a strongly-typed schema.
+It's ideal for dynamic UIs like dashboards or mobile apps where data needs are flexible.
+REST gives fixed data per endpoint — sometimes too much, sometimes too little.
+GraphQL lets the client ask for exactly what it needs — which avoids over-fetching or under-fetching.
+That’s especially helpful in dynamic UIs, where different screens need different data.
+It also reduces the number of network calls, improving performance.
+
+6) why did i use graphql over rest api for leetsync?
+
+In my LeetSync project, I needed to fetch my Leetcode submission data.
+But Leetcode doesn’t offer any public REST API for this. 
+Instead, their frontend uses a GraphQL endpoint internally 
+— specifically at https://leetcode.com/graphql.
+
+I chose to use GraphQL for a few reasons:
+
+Leetcode exposes only GraphQL
+There is no REST API available, so this was the only reliable way to programmatically get submission data.
+
+I could control exactly what fields I needed
+I didn’t want extra metadata — just the submission title, status, timestamp, and language.
+GraphQL let me write a custom query to get only that.
+
+One request = All the data
+REST would have required multiple calls (if it existed): one for user info, another for submissions, maybe another for topics.
+But with GraphQL, I could fetch everything in a single request, which made the tool faster and more efficient.
+
+It fits well with evolving UIs
+Since this is a CLI tool that might later support features like topic-wise filtering or date-based analysis, GraphQL is flexible — I can just update the query structure without changing the server.
+
+So in my case, GraphQL was the natural choice — not just because Leetcode uses it, but because it gave me precise control, fewer requests, and better flexibility for building analysis tools around user submissions.
+
+7) “What would you have done if Leetcode exposed a REST API instead?”
+
+If they had a clean REST API, I might have used it — but it often leads to over-fetching or making multiple requests.
+GraphQL gave me more flexibility and efficiency, especially when I just wanted a small subset of fields from nested data.
+
+“GraphQL queries are like remote function calls. 
+You pass arguments, ask for specific return fields, and the server resolves them based on its schema. 
+In LeetSync, I inspected the Leetcode frontend and extracted their private recentSubmissions query from the GraphQL request payload.”
+
+8) difference between json.loads() and response.json()
+| `response.json()`                         | `json.loads()`                           |
+| ----------------------------------------- | ---------------------------------------- |
+| A method from the `requests` library      | A method from the built-in `json` module |
+| Works **directly on a `Response` object** | Needs a **raw JSON string**              |
+| Handles encoding + HTTP edge cases        | Assumes input is already a JSON string   |
+
+| Use this when…    | You have…                                                      |
+| ----------------- | -------------------------------------------------------------- |
+| `response.json()` | A response object from `requests`                              |
+| `json.loads()`    | A string that’s already JSON (maybe from a file or user input) |
+
+“response.json() is convenient when working with HTTP responses using the requests library. 
+It automatically decodes the JSON payload into a Python dictionary.
+I’d use json.loads() when I already have a JSON string, like when reading from a file.”
+
+9) explain the fetch submissions feature:
+
+“Leetcode doesn’t provide a public REST API for user data access, but its frontend communicates with its backend via GraphQL.
+When a logged-in user visits their submissions page, Leetcode sends a POST request to a GraphQL endpoint at https://leetcode.com/graphql.
+I used Chrome DevTools → Network tab → XHR to inspect that request and discovered it uses a query named recentSubmissionList.
+
+Unlike REST APIs, where you'd call something like GET /submissions, GraphQL works by sending a query string to a single endpoint.
+The client defines:
+What data it wants
+How it wants it shaped
+Optional input variables like filters or limits
+This prevents over-fetching (getting more than you need) or under-fetching (having to call multiple endpoints), and is especially useful in UIs that are dynamic — like dashboards, mobile apps, and coding platforms like Leetcode.
+
+Leetcode’s GraphQL API is not public, and does not allow unauthenticated access.
+There’s no OAuth token or API key. Instead, authentication happens via browser sessions.
+
+FINALLY:
+“Leetcode doesn’t expose a public REST API, but it uses GraphQL internally to power its frontend.
+I inspected the browser’s Network traffic using DevTools and found that when I visit my profile, the frontend sends a GraphQL POST request to /graphql.
+That request calls a query called recentSubmissionList, which accepts two variables: a username and a limit.
+I replicated that request in Python using the requests library. I created a JSON payload where:
+operationName is just a label ("recentSubmissionList")
+variables holds my actual username and how many submissions I want
+query contains the GraphQL query string with the fields I want (like title, timestamp, status, etc.)
+Leetcode’s GraphQL API is not public, and does not allow unauthenticated access.
+There’s no OAuth token or API key. Instead, authentication happens via browser sessions.
+So I authenticated by extracting my LEETCODE_SESSION cookie from the browser (via DevTools → Application → Cookies) after logging into Leetcode.
+I passed that session cookie in the request headers using the Cookie field, so Leetcode would recognize my script as a logged-in user:
+
+headers = {
+    "Content-Type": "application/json",
+    "Cookie": f"LEETCODE_SESSION={session_cookie};"
+}
+
+Once I got the response, I used response.json() to parse the JSON into a Python dictionary, and accessed the list of submissions using:
+submissions = response.json()["data"]["recentSubmissionList"]
+Finally, I saved the data to data/progress.json, so I could analyze it or export it later.
+This approach gives me full offline access to my Leetcode history, even without an official API.”
+
+10) What's the difference between session-based and token-based authentication, and why did you use session-based for Leetcode?
+“Session-based and token-based authentication are two common ways to manage user identity.
+In session-based auth, the user logs in through a web form, and the server sets a session cookie (like LEETCODE_SESSION). The browser stores this cookie and sends it with every request. This is ideal for browser-based workflows.
+In token-based auth, the user logs in or uses an API key to receive a token (like a JWT), which is sent with every API request using the Authorization header — typically used in REST APIs or public developer platforms like GitHub.
+I used session-based auth in my LeetSync CLI tool because Leetcode doesn’t offer public API keys or OAuth tokens. Instead, it relies on browser login and session cookies to authenticate users. So I extracted the session cookie from my logged-in browser session and passed it in the request headers to simulate an authenticated browser environment.”
+
+Keywords You Can Drop in Interviews:
+"Leetcode doesn’t expose a login endpoint or token auth"
+
+"Authentication is handled through browser sessions"
+
+"Session cookies maintain state on the server"
+
+"Tokens are stateless and portable, but Leetcode doesn’t support that"
+
+“Authentication on the web usually works in two ways: session-based and token-based.
+Token-based authentication is used for APIs. A client logs in once (via username/password or OAuth), receives a token (like a JWT), 
+and then sends that token in the Authorization header for every API call. 
+The server doesn’t store session state — it validates the token itself. 
+This is common in public APIs like GitHub or Firebase.
+In contrast, session-based authentication is how browsers typically work. 
+When a user logs in, the server creates a session on its end, and sends back a session ID via a cookie like LEETCODE_SESSION. 
+That cookie is stored by the browser and sent along with every future request to identify the user.
+Leetcode doesn’t offer token-based login or a public API. So instead, I extracted the active session cookie from my browser 
+— which proves I’m logged in — and used it in my script’s request headers. 
+This way, Leetcode treats my Python script just like a browser tab from my session.
+Without the session cookie, the server wouldn’t authenticate my request. 
+This method let me securely fetch my personal submission data even though Leetcode’s API isn’t public.”
+
+| Term                                         | What It Is                                | Example                                   |
+| -------------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| `operationName`                              | Name of your query (for tracking/logging) | `"operationName": "recentSubmissionList"` |
+| `query recentSubmissionList(...)`            | Declares a named GraphQL query            | like `def recentSubmissionList(...)`      |
+| `recentSubmissionList(...)` inside the query | Backend resolver you’re calling           | like invoking a backend function          |
+| Session cookie                               | Proof of login in a browser               | `LEETCODE_SESSION=abc123`                 |
+| Token                                        | Proof of login in an API                  | `Authorization: Bearer <token>`           |
+
+
+11) “What did your analyse_topics and fetch pipeline do?”
+
+“I used Leetcode’s internal GraphQL API to fetch my last 20 submissions using my session cookie for authentication.
+Then I queried each problem’s topicTags field to understand which categories I solve most and least.
+I deduplicated repeated problems using the slug, counted tag frequencies using a defaultdict, 
+and sorted them to report the strongest and weakest topics. This gives personalized insights into what topics 
+I’m consistently practicing and what needs improvement. I exposed this via a CLI flag using argparse.”
+
+12) what does writerow() take?
+“writer.writerow() expects an iterable like a list or tuple, where each item becomes a column in the CSV.
+I used a list of strings to represent column headers and later a list of field values per submission.”
+
+13)  What Are ANSI Escape Codes?
+They're just special character sequences that your terminal understands as instructions to color text 
+instead of printing it normally.
+
+Each code:
+-starts with \033[ (this means “escape”)
+-followed by a color code (like 91m for red, 93m for yellow)
+-ends with \033[0m which resets the color so the rest of your text isn't colored too.
+-You don’t need to install anything — terminals like the Windows Command Prompt (with some config), Linux terminal,
+or Mac Terminal already understand them.
+
